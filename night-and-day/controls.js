@@ -31,7 +31,10 @@ export class InfoControl {
         <p>This page renders Earth's <a href="https://en.wikipedia.org/wiki/Terminator_(solar)">solar terminator</a> on a <a href="https://www.mapbox.com/">Mapbox</a> map. It fetches <a href="https://studio.mapbox.com/tilesets/rreusser.black-marble/">Black Marble tiles</a> and uses a WebGL shader to composite the terminator into the alpha channel of the tiles, outputting the result to a <a href="https://github.com/mapbox/mapbox-gl-js/pull/12063">custom raster source</a>.</p>
         <p>The astronomical calculations are entirely based on a distillation of Volodymyr Agafonkin's amazing <a href="https://github.com/mourner/suncalc">SunCalc</a> library.</p>
         <p>You can adjust the altitude (in degrees) above or below the horizon at which the terminator is faded. Step strength turns on six degree steps, corresponding to the steps of sunset (0˚), civil twilight (-6˚), nautical twilight (-12˚), and astronomical twilight (-18˚).</p>
-        <p><em>Source: <a href="https://earthobservatory.nasa.gov/features/NightLights/page3.php">NASA Earth at Night</a></em></p>
+        <p>
+          <em>Data: <a href="https://earthobservatory.nasa.gov/features/NightLights/page3.php">NASA Earth at Night</a></em><br>
+          <em>Source code: <a href="https://github.com/rreusser/maps/tree/main/night-and-day">GitHub</a></em>
+        </p>
       </div>
     `;
 

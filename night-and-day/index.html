@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Night and Day</title>
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link rel='stylesheet' href="https://unpkg.com/mapbox-gl@2.10.0/dist/mapbox-gl.css" />
+  <link rel='stylesheet' href="./style.css" />
+
+  <meta property="description" content="Rendering a solar terminator in Mapbox">
+
+  <meta property="og:type" content="article">
+  <meta property="og:image" content="https://raw.githubusercontent.com/rreusser/maps/main/night-and-day/cover.jpg">
+  <meta property="og:title" content="Night and Day">
+  <meta property="og:description" content="Rendering a solar terminator in Mapbox">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Night and Day">
+  <meta name="twitter:description" content="Rendering a solar terminator in Mapbox">
+  <meta name="twitter:creator" content="rickyreusser">
+  <meta name="twitter:image:src" content="https://raw.githubusercontent.com/rreusser/maps/main/night-and-day/cover.jpg">
+</head>
+
+<body>
+<div id='map'></div>
+
+<script src="https://unpkg.com/dat.gui@0.7.9/build/dat.gui.js"></script>
+<script src="https://unpkg.com/mapbox-gl@2.10.0/dist/mapbox-gl.js"></script>
+
+<script type="module">
+
+import TerminatorRenderer from './terminator-renderer.js';
+import { InfoControl, GuiControl, DateOutputControl } from './controls.js';
+
+const guiParams = new function () {
+  this.dayOfYear = 0;
+  this.hourOfDay = 0;
+  this.opacity = 0.93;
+  this.projection = 'mercator';
+  this.stepStrength = 0;
+  this.dawnAltitude = 6;
+  this.twilightAltitude = -6;
+  this.live = true;
+};
+
+mapboxgl.accessToken = 'pk.eyJ1IjoicnJldXNzZXIiLCJhIjoiY2tsNzNnN2xwMXJ3bTJxcWplaHptZmtmNiJ9.4jyhYK5B3nCMw2NTD761hg';//'pk.eyJ1IjoicnJldXNzZXIiLCJhIjoiY2w5a3ZvcHU3NTJvZDNvcW1hcHAzeXB6cCJ9.CDFj_g1W8pBg6KA-ascYig';
+
+var map = window.map = new mapboxgl.Map({
+    container: 'map',
+    zoom: 1,
+    center: [0, 10],
+    style: 'mapbox://styles/rreusser/cl9kvd6ip000c15mudn99xvi7?fresh=true',
+    projection: guiParams.projection,
+    hash: true
+});
+
+// A tiny little hack to take advantage of a bug and reduce the halo on the globe
+map.transform.fov = 32.5;
+
+map.once('load', function () {
+  const is2x = window.devicePixelRatio > 1;
+  const tileSize = 256;
+  const tileURL = `https://api.mapbox.com/v4/rreusser.black-marble/{z}/{x}/{y}.webp?sku={sku}&access_token=${mapboxgl.accessToken}`;
+
+  const terminatorRenderer = new TerminatorRenderer({
+    date: Date.now(),
+    tileSize,
+    is2x,
+    stepping: guiParams.stepStrength,
+    fadeRange: [guiParams.dawnAltitude, guiParams.twilightAltitude],
+    fetchTileImageBitmap: async function (zxy) {
+      const sku = map._requestManager._skuToken;
+      const response = await fetch(tileURL
+        .replace('{z}/{x}/{y}', zxy)
+        .replace('{sku}', sku)
+        .replace('.webp', is2x ? '@2x.webp' : '.webp'));
+      if (!response.ok) throw response.body;
+      return await createImageBitmap(await response.blob());
+    },
+  })
+
+  map.addSource("solar-terminator", terminatorRenderer);
+  map.addLayer({
+    id: "solar-terminator",
+    source: "solar-terminator",
+    type: "raster",
+    paint: {
+      "raster-fade-duration": 0,
+      'raster-opacity': guiParams.opacity
+    }
+  });
+
+  const dateOutput = new DateOutputControl();
+  map.addControl(dateOutput, 'bottom-right');
+
+  map.addControl(new GuiControl(guiParams, terminatorRenderer), 'top-left');
+  map.addControl(new InfoControl(), 'top-left');
+  map.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+});
+
+</script>
+</body>
+</html>

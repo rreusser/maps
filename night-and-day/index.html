@@ -29,7 +29,7 @@
 
 <script type="module">
 
-import TerminatorRenderer from './terminator-renderer.js';
+import TerminatorSource from './terminator-source.js';
 import { InfoControl, GuiControl, DateOutputControl } from './controls.js';
 
 const guiParams = new function () {
@@ -62,7 +62,7 @@ map.once('load', function () {
   const tileSize = 256;
   const tileURL = `https://api.mapbox.com/v4/rreusser.black-marble/{z}/{x}/{y}.webp?sku={sku}&access_token=${mapboxgl.accessToken}`;
 
-  const terminatorRenderer = new TerminatorRenderer({
+  const terminatorRenderer = new TerminatorSource({
     date: Date.now(),
     tileSize,
     is2x,

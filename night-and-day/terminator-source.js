@@ -1,7 +1,7 @@
 import LRU from 'https://cdn.skypack.dev/lru-cache@7.14.0';
-import Tiler from './tiler.js';
+import TerminatorTiler from './terminator-tiler.js';
 
-export default class TerminatorRenderer {
+export default class TerminatorSource {
   constructor({
     tileSize = 256,
     fadeRange = [12, -12],
@@ -19,7 +19,7 @@ export default class TerminatorRenderer {
     const canvas = document.createElement('canvas');
     canvas.width = renderSize;
     canvas.height = renderSize;
-    this.tiler = new Tiler(canvas);
+    this.tiler = new TerminatorTiler(canvas);
     this._fadeRange = fadeRange;
     this._date = date ?? new Date();
     this._stepping = stepping ?? 0.0;

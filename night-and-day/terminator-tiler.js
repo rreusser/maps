@@ -11,7 +11,7 @@ function tileBounds3857(x, y, z) {
   return [xmin, ymin, xmax, ymax];
 }
 
-export default class Tiler {
+export default class TerminatorTiler {
   constructor(canvas) {
     this.canvas = canvas;
 

@@ -1,0 +1,46 @@
+.mapboxgl-ctrl-scale + .mapboxgl-ctrl-scale {
+  margin-top: 0 !important;
+}
+
+
+.mapboxgl-ctrl-legend {
+  pointer-events: none;
+}
+
+.baytrail-legend {
+  padding: 10px;
+  background-color: #fff8e8;
+  border-radius: 4px;
+}
+
+.baytrail-legend h3 {
+  margin: 0;
+}
+
+.baytrail-legend dl {
+  margin: 0;
+}
+
+.baytrail-legend dt {
+  display: inline-block;
+}
+
+.baytrail-legend dd {
+  display: inline;
+  margin: 0;
+}
+
+.baytrail-legend dd:after {
+  content: '';
+  display: block;
+}
+
+.baytrail-legendLine {
+  vertical-align: middle;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.mapboxgl-ctrl-measure.active {
+  background-color: #3388ff;
+}

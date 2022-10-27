@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bay Trail</title>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; padding: 15px; }
+        html, body { height: 100%; }
+        #map { height: 80vh; }
+    </style>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css' rel='stylesheet' />
+    <link href='style.css' rel='stylesheet' />
+</head>
+
+<body>
+
+<div id='map'></div>
+
+<script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js'></script>
+<script>
+
+class LegendControl {
+  constructor({container=null} = {}) {
+    this._container = container;
+  }
+
+  onAdd(map) {
+    this._map = map;
+    if (!this._container) this._container = this._map.getContainer();
+    this._controlContainer = document.createElement('div');
+    this._controlContainer.classList = `mapboxgl-ctrl mapboxgl-ctrl-group mapboxgl-ctrl-legend`;
+    this.constructUI();
+    return this._controlContainer;
+  }
+
+  onRemove() {
+    this._controlContainer.remove();
+    this._map = null;
+  }
+
+  constructUI () {
+    this._controlContainer.innerHTML = `
+      <div class="baytrail-legend">
+        <h3>Bay Trail</h3>
+        <dl>
+          <dt>
+            <svg width="25" height="5" viewBox="0 0 25 5" class="baytrail-legendLine">
+              <line x1="0" x2="25" y1="2.5" y2="2.5" style="stroke-width:5;stroke:#265a3b"/>
+            </svg>
+          </dt><dd>Paved (off street)</dd>
+
+          <dt>
+            <svg width="25" height="5" viewBox="0 0 25 5" class="baytrail-legendLine">
+              <line x1="0" x2="25" y1="2.5" y2="2.5" style="stroke-width:5;stroke:#70c05e"/>
+            </svg>
+          </dt><dd>Dirt/Gravel</dd>
+
+          <dt>
+            <svg width="25" height="5" viewBox="0 0 25 5" class="baytrail-legendLine">
+              <line x1="0" x2="25" y1="2.5" y2="2.5" style="stroke-width:5;stroke:#265a3b"/>
+              <line x1="0" x2="25" y1="2.5" y2="2.5" style="stroke-width:2.5;stroke:#70c05e"/>
+            </svg>
+          </dt><dd>On Street</dd>
+
+          <dt>
+            <svg width="25" height="5" viewBox="0 0 25 5" class="baytrail-legendLine">
+              <line x1="0" x2="25" y1="2.5" y2="2.5" style="stroke-width:5;stroke:#70c05e;stroke-dasharray:4,3"/>
+            </svg>
+          </dt><dd>Planned</dd>
+        </dl>
+        <h3>Other Trail</h3>
+        <dl>
+          <dt>
+            <svg width="25" height="5" viewBox="0 0 25 5" class="baytrail-legendLine">
+              <line x1="0" x2="25" y1="2.5" y2="2.5" style="stroke-width:5;stroke:#9c70da"/>
+            </svg>
+          </dt><dd>Existing</dd>
+
+          <dt>
+            <svg width="25" height="5" viewBox="0 0 25 5" class="baytrail-legendLine">
+              <line x1="0" x2="25" y1="2.5" y2="2.5" style="stroke-width:5;stroke:#9c70da;stroke-dasharray:4,3"/>
+            </svg>
+          </dt><dd>Planned</dd>
+        </dl>
+      </div>
+    `;
+  }
+}
+
+class MeasurementOutput {
+  constructor({container=null}={}) {
+    this._container = container;
+    this._tempDistance = 0;
+    this._distance = 0;
+  }
+
+  onAdd(map) {
+    this._map = map;
+    if (!this._container) this._container = this._map.getContainer();
+    this._controlContainer = document.createElement('div');
+    this._controlContainer.classList = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+
+    this._controlContainer.style.cssText = `
+    padding: 0 8px;
+    color: white;
+    min-width: 100px;
+    text-align: center;
+    background-color: rgb(0 0 0/70%);
+    box-shadow: 0 0 0 2px rgb(0 0 0/80%);
+    `;
+
+    this._controlContainer.textContent = 'Distance: 0.00 miles';
+    return this._controlContainer;
+  }
+
+  onRemove() {
+    this._controlContainer.remove();
+    this._map = null;
+  }
+
+  _updateDistanceText () {
+    const dist = this._distance + this._tempDistance;
+    this._controlContainer.textContent = `Distance: ${dist.toFixed(2)} miles`;
+  }
+
+  set distance (value) {
+    this._distance = value;
+    this._updateDistanceText();
+  }
+  set tempDistance (value) {
+    this._tempDistance = Number.isNaN(value) ? 0 : value;
+    this._updateDistanceText();
+  }
+}
+
+class MeasureControl {
+  constructor({container=null} = {}) {
+    this._container = container;
+    this._enabled = false;
+    this._coordinates = [];
+    this._newCoordinates = [[0, 0], [0, 0]];
+  }
+
+  onAdd(map) {
+    this._map = map;
+    if (!this._container) this._container = this._map.getContainer();
+    this._controlContainer = document.createElement('div');
+    this._controlContainer.classList = 'mapboxgl-ctrl mapboxgl-ctrl-group mapboxgl-ctrl-measure';
+    this.constructUI();
+
+    this._map.addSource('measurement-path', {
+      type: 'geojson',
+      data: {
+        type: 'LineString',
+        coordinates: this._coordinates
+      }
+    });
+
+    this._map.addSource('measurement-new-path', {
+      type: 'geojson',
+      data: {
+        type: 'LineString',
+        coordinates: [[0, 0], [0, 0]],
+      }
+    });
+
+    this._map.addSource('measurement-vertices', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: this._coordinates.map(coordinates => ({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'Point',
+            coordinates
+          }
+        }))
+      }
+    });
+
+    this._map.addLayer({
+      id: 'measurement-path-vertices-border',
+      source: 'measurement-vertices',
+      type: 'circle',
+      paint: {
+        'circle-radius': 5,
+        'circle-color': '#112288'
+      }
+    });
+
+    this._map.addLayer({
+      id: 'measurement-path-line-casing',
+      source: 'measurement-path',
+      type: 'line',
+      paint: {
+        'line-width': 5,
+        'line-color': '#112288'
+      },
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      }
+    });
+
+    this._map.addLayer({
+      id: 'measurement-path-line',
+      source: 'measurement-path',
+      type: 'line',
+      paint: {
+        'line-width': 3,
+        'line-color': '#3388ff'
+      },
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      }
+    });
+
+    this._map.addLayer({
+      id: 'measurement-new-path-line',
+      source: 'measurement-new-path',
+      type: 'line',
+      paint: {
+        'line-width': 3,
+        'line-color': '#3388ff',
+        'line-dasharray': [1, 2],
+      },
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      }
+    });
+
+    this._map.addLayer({
+      id: 'measurement-path-vertices',
+      source: 'measurement-vertices',
+      type: 'circle',
+      paint: {
+        'circle-radius': 4,
+        'circle-color': 'white'
+      },
+      layout: {
+      }
+    });
+
+
+    return this._controlContainer;
+  }
+
+  onRemove() {
+    this._disableMeasurement();
+    this._map.removeLayer('measurement-path-line');
+    this._map.removeLayer('measurement-path-line-casing');
+    this._map.removeSource('measurement-path');
+    this._controlContainer.remove();
+    this._map = null;
+  }
+
+  constructUI () {
+    const toggle = document.createElement('button');
+    toggle.textContent = '📏'
+
+    toggle.addEventListener('click', this._toggleMeasurement.bind(this));
+
+    this._controlContainer.appendChild(toggle);
+  }
+
+  _toggleMeasurement () {
+    this._enabled = !this._enabled;
+    this._coordinates.length = 0;
+
+    if (this._enabled) {
+      this._enableMeasurement();
+    } else {
+      this._disableMeasurement();
+    }
+    this._setCursor();
+  }
+
+  _enableMeasurement () {
+    this._controlContainer.classList.add('active');
+    this._map.setLayoutProperty('measurement-path-line', 'visibility', 'visible');
+    this._map.setLayoutProperty('measurement-path-line-casing', 'visibility', 'visible');
+    this._map.setLayoutProperty('measurement-new-path-line', 'visibility', 'none');
+    this._newCoordinates = [[NaN, NaN], [0, 0]]
+    this._handleClick = event => {
+      event.preventDefault();
+      this._coordinates.push([event.lngLat.lng, event.lngLat.lat]);
+      this._newCoordinates = [
+        [event.lngLat.lng, event.lngLat.lat],
+        [event.lngLat.lng, event.lngLat.lat]
+      ];
+      this._measurementOutput.tempDistance = 0;
+      this._updatePath();
+      this._updateTmpPath();
+      this._setCursor();
+      this._map.setLayoutProperty('measurement-new-path-line', 'visibility', 'visible');
+    };
+
+    this._handleMouseMove = event => {
+      this._newCoordinates[1] = [event.lngLat.lng, event.lngLat.lat];
+      this._measurementOutput.tempDistance = turf.length(turf.lineString(this._newCoordinates));
+      this._updateTmpPath();
+    };
+
+    this._measurementOutput = new MeasurementOutput();
+    this._map.addControl(this._measurementOutput, 'top-right');
+
+    this._map.on('click', this._handleClick);
+    this._map.on('mousemove', this._handleMouseMove);
+  }
+
+  _disableMeasurement () {
+    this._controlContainer.classList.remove('active');
+    this._map.off('click', this._handleClick);
+    this._map.off('mousemove', this._handleMouseMove);
+    this._map.setLayoutProperty('measurement-path-line', 'visibility', 'none');
+    this._map.setLayoutProperty('measurement-path-line-casing', 'visibility', 'none');
+    this._map.setLayoutProperty('measurement-new-path-line', 'visibility', 'none');
+    this._map.removeControl(this._measurementOutput);
+    this._measurementOutput = null;
+    this._setCursor();
+    this._updatePath();
+  }
+
+  _updateTmpPath () {
+    this._map.getSource('measurement-new-path').setData({
+      type: 'LineString',
+      coordinates: this._newCoordinates
+    });
+    map.triggerRepaint();
+  }
+
+  _updatePath () {
+    const lineString = {
+      type: 'LineString',
+      coordinates: this._coordinates
+    }
+    this._map.getSource('measurement-path').setData(lineString);
+
+    this._map.getSource('measurement-vertices').setData({
+      type: 'FeatureCollection',
+      features: this._coordinates.map(coordinates => ({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Point',
+          coordinates
+        }
+      }))
+    });
+
+    if (this._measurementOutput) this._measurementOutput.distance = turf.length(lineString);
+    map.triggerRepaint();
+  }
+
+  _setCursor () {
+    if (this._enabled) {
+      map.getCanvas().style.cursor = 'crosshair';
+    } else {
+      map.getCanvas().style.cursor = '';
+    }
+  }
+}
+
+class BayTrailMap {
+  constructor({mapboxgl, accessToken, container}) {
+    this.mapboxgl = mapboxgl;
+    this.map = window.map = new this.mapboxgl.Map({
+      container,
+      accessToken,
+      style: 'mapbox://styles/rreusser/cl8opuxyd000014qgjao6pono',
+      hash: false,
+      logoPosition: 'top-right',
+      bounds: [[-122.75, 37.3], [-121.8, 38.3]],
+      fitBoundsOptions: {
+        padding: 30
+      },
+      maxBounds: [
+        [-126, 35],
+        [-119, 41]
+      ],
+    });
+
+    map.once('load', () => {
+      this.metricScaleControl = new this.mapboxgl.ScaleControl({unit: 'metric'});
+      this.imperialScaleControl = new this.mapboxgl.ScaleControl({unit: 'imperial'});
+      map.addControl(this.metricScaleControl, 'top-right');
+      map.addControl(this.imperialScaleControl, 'top-right');
+
+      this.navControl = new this.mapboxgl.NavigationControl()
+      map.addControl(this.navControl, 'top-left');
+
+      this.locateUserControl = new this.mapboxgl.GeolocateControl();
+      map.addControl(this.locateUserControl, 'top-left');
+
+      this.fullscreenControl = new this.mapboxgl.FullscreenControl();
+      map.addControl(this.fullscreenControl, 'top-left');
+
+      this.legendControl = new LegendControl();
+      map.addControl(this.legendControl, 'bottom-left');
+
+      this.measureControl = new MeasureControl();
+      map.addControl(this.measureControl, 'top-left');
+    });
+  }
+}
+
+const bayTrailMap = new BayTrailMap({
+  mapboxgl: window.mapboxgl,
+  container: document.getElementById('map'),
+  accessToken: 'pk.eyJ1IjoicnJldXNzZXIiLCJhIjoiY2tsNzNnN2xwMXJ3bTJxcWplaHptZmtmNiJ9.4jyhYK5B3nCMw2NTD761hg',
+});
+
+</script>
+</body>
+</html>

@@ -129,7 +129,7 @@ class MeasurementOutput {
     this._distance = value;
     this._updateDistanceText();
   }
-  set tempDistance (value) {
+  set tmpDistance (value) {
     this._tempDistance = Number.isNaN(value) ? 0 : value;
     this._updateDistanceText();
   }
@@ -140,7 +140,12 @@ class MeasureControl {
     this._container = container;
     this._enabled = false;
     this._coordinates = [];
-    this._newCoordinates = [[0, 0], [0, 0]];
+
+    // Temporary coordiantes, to be updated quickly as mouse hover moves
+    this._tmpCoordinates = [[0, 0], [0, 0]];
+
+    // When finalized, clicks start a new path
+    this._finalized = false;
   }
 
   onAdd(map) {
@@ -158,7 +163,7 @@ class MeasureControl {
       }
     });
 
-    this._map.addSource('measurement-new-path', {
+    this._map.addSource('measurement-tmp-path', {
       type: 'geojson',
       data: {
         type: 'LineString',
@@ -170,9 +175,11 @@ class MeasureControl {
       type: 'geojson',
       data: {
         type: 'FeatureCollection',
-        features: this._coordinates.map(coordinates => ({
+        features: this._coordinates.map((coordinates, id) => ({
           type: 'Feature',
-          properties: {},
+          properties: {
+            id: id
+          },
           geometry: {
             type: 'Point',
             coordinates
@@ -186,7 +193,12 @@ class MeasureControl {
       source: 'measurement-vertices',
       type: 'circle',
       paint: {
-        'circle-radius': 5,
+        'circle-radius': [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          7,
+          5
+        ],
         'circle-color': '#112288'
       }
     });
@@ -220,8 +232,8 @@ class MeasureControl {
     });
 
     this._map.addLayer({
-      id: 'measurement-new-path-line',
-      source: 'measurement-new-path',
+      id: 'measurement-tmp-path-line',
+      source: 'measurement-tmp-path',
       type: 'line',
       paint: {
         'line-width': 3,
@@ -239,13 +251,17 @@ class MeasureControl {
       source: 'measurement-vertices',
       type: 'circle',
       paint: {
-        'circle-radius': 4,
+        'circle-radius': [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          6,
+          4
+        ],
         'circle-color': 'white'
       },
       layout: {
       }
     });
-
 
     return this._controlContainer;
   }
@@ -261,11 +277,40 @@ class MeasureControl {
 
   constructUI () {
     const toggle = document.createElement('button');
-    toggle.textContent = '📏'
+    toggle.setAttribute('title', 'Measure path');
+    const icon = this.createIcon();
+    toggle.appendChild(icon);
 
     toggle.addEventListener('click', this._toggleMeasurement.bind(this));
 
     this._controlContainer.appendChild(toggle);
+  }
+
+  createIcon () {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M6,2L18,14L14,18L2,6Z M16,12L14,14 M14,10L13,11 M12,8L10,10 M10,6L9,7 M8,4L6,6');
+    path.setAttribute('stroke-width', '0.8px');
+    path.setAttribute('stroke', 'black');
+    path.setAttribute('fill', '#e0e0ee');
+    svg.setAttribute('width', 24);
+    svg.setAttribute('height', 24);
+    svg.setAttribute('viewBox', '0 0 20 20');
+    svg.appendChild(path);
+    return svg;
+  }
+
+  finalizePath () {
+    this._finalized = true;
+    this._tmpCoordinates = [[0, 0], [0, 0]];
+    this._measurementOutput.tmpDistance = 0;
+    this._updateTmpPath();
+    this._updatePath();
+  }
+
+  newPath () {
+    this._finalized = false;
+    this._coordinates.length = 0;
   }
 
   _toggleMeasurement () {
@@ -284,26 +329,81 @@ class MeasureControl {
     this._controlContainer.classList.add('active');
     this._map.setLayoutProperty('measurement-path-line', 'visibility', 'visible');
     this._map.setLayoutProperty('measurement-path-line-casing', 'visibility', 'visible');
-    this._map.setLayoutProperty('measurement-new-path-line', 'visibility', 'none');
-    this._newCoordinates = [[NaN, NaN], [0, 0]]
+    this._map.setLayoutProperty('measurement-tmp-path-line', 'visibility', 'none');
+    this._tmpCoordinates = [[NaN, NaN], [0, 0]]
+
     this._handleClick = event => {
       event.preventDefault();
+
+      if (this._finalized) {
+        this.newPath();
+      } else {
+        // If the path is not finalized, then a click on the last-appended point finalizes the path
+        const features = map.queryRenderedFeatures(event.point, {
+          layers: ['measurement-path-vertices']
+        });
+
+        // If the clicked point is the last point of the path, then close the path
+        for (const feature of features) {
+          if (feature.id === this._coordinates.length - 1) {
+            this.finalizePath();
+            return;
+          }
+        }
+      }
+
+      // If not a click on a point, then proceed as normal with appending a point to the
+      // measurement path
       this._coordinates.push([event.lngLat.lng, event.lngLat.lat]);
-      this._newCoordinates = [
+      this._tmpCoordinates = [
         [event.lngLat.lng, event.lngLat.lat],
         [event.lngLat.lng, event.lngLat.lat]
       ];
-      this._measurementOutput.tempDistance = 0;
+      this._measurementOutput.tmpDistance = 0;
       this._updatePath();
       this._updateTmpPath();
       this._setCursor();
-      this._map.setLayoutProperty('measurement-new-path-line', 'visibility', 'visible');
+      this._map.setLayoutProperty('measurement-tmp-path-line', 'visibility', 'visible');
+
+      map.setFeatureState({
+        source: 'measurement-vertices',
+        id: this._coordinates.length - 1
+      }, {
+        hover: true
+      });
     };
 
+    const activeHoverFeatureIds = [];
     this._handleMouseMove = event => {
-      this._newCoordinates[1] = [event.lngLat.lng, event.lngLat.lat];
-      this._measurementOutput.tempDistance = turf.length(turf.lineString(this._newCoordinates));
+      const features = map.queryRenderedFeatures(event.point, {
+        layers: ['measurement-path-vertices']
+      });
+      for (const feature of features) {
+        activeHoverFeatureIds.push(feature.id);
+        map.setFeatureState({
+          source: 'measurement-vertices',
+          id: feature.id
+        }, {
+          hover: true
+        });
+      }
+
+      if (this._finalized) return;
+      this._tmpCoordinates[1] = [event.lngLat.lng, event.lngLat.lat];
+      this._measurementOutput.tmpDistance = turf.length(turf.lineString(this._tmpCoordinates));
       this._updateTmpPath();
+    };
+
+    this._handleLeaveFeature = event => {
+      while (activeHoverFeatureIds.length) {
+        const id = activeHoverFeatureIds.pop();
+        map.setFeatureState({
+          source: 'measurement-vertices',
+          id: id
+        }, {
+          hover: false
+        });
+      }
     };
 
     this._measurementOutput = new MeasurementOutput();
@@ -311,6 +411,7 @@ class MeasureControl {
 
     this._map.on('click', this._handleClick);
     this._map.on('mousemove', this._handleMouseMove);
+    this._map.on('mouseleave', 'measurement-path-vertices', this._handleLeaveFeature);
   }
 
   _disableMeasurement () {
@@ -319,7 +420,7 @@ class MeasureControl {
     this._map.off('mousemove', this._handleMouseMove);
     this._map.setLayoutProperty('measurement-path-line', 'visibility', 'none');
     this._map.setLayoutProperty('measurement-path-line-casing', 'visibility', 'none');
-    this._map.setLayoutProperty('measurement-new-path-line', 'visibility', 'none');
+    this._map.setLayoutProperty('measurement-tmp-path-line', 'visibility', 'none');
     this._map.removeControl(this._measurementOutput);
     this._measurementOutput = null;
     this._setCursor();
@@ -327,9 +428,9 @@ class MeasureControl {
   }
 
   _updateTmpPath () {
-    this._map.getSource('measurement-new-path').setData({
+    this._map.getSource('measurement-tmp-path').setData({
       type: 'LineString',
-      coordinates: this._newCoordinates
+      coordinates: this._tmpCoordinates
     });
     map.triggerRepaint();
   }
@@ -343,8 +444,9 @@ class MeasureControl {
 
     this._map.getSource('measurement-vertices').setData({
       type: 'FeatureCollection',
-      features: this._coordinates.map(coordinates => ({
+      features: this._coordinates.map((coordinates, id) => ({
         type: 'Feature',
+        id: id,
         properties: {},
         geometry: {
           type: 'Point',

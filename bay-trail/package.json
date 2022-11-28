@@ -1,0 +1,15 @@
+{
+  "name": "baytrail",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "budo dummy.js --open --live --host localhost --css style.css"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@turf/turf": "^6.5.0"
+  }
+}

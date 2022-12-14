@@ -10,6 +10,14 @@ const styles = [{
   label: 'Satellite',
   icon: '🛰',
   url: 'mapbox://styles/mapbox/satellite-v9',
+}, {
+  label: 'Dark',
+  icon: '🌚',
+  url: 'mapbox://styles/mapbox/dark-v11',
+}, {
+  label: 'Light',
+  icon: '🌝',
+  url: 'mapbox://styles/mapbox/light-v11',
 }];
 
 export default class StyleControl {

@@ -11,7 +11,7 @@
   <meta property="description" content="All maps, all day.">
 
   <meta property="og:type" content="article">
-  <meta property="og:image" content="https://raw.githubusercontent.com/rreusser/maps/main/box-o-maps/cover.jpg">
+  <meta property="og:image" content="https://raw.githubusercontent.com/rreusser/maps/main/box-o-maps/src/assets/cover.jpg">
   <meta property="og:title" content="Box o' Maps">
   <meta property="og:description" content="All maps, all day.">
 
@@ -19,20 +19,29 @@
   <meta name="twitter:title" content="Box o' Maps">
   <meta name="twitter:description" content="All maps, all day.">
   <meta name="twitter:creator" content="rickyreusser">
-  <meta name="twitter:image:src" content="https://raw.githubusercontent.com/rreusser/maps/main/box-o-maps/cover.jpg">
+  <meta name="twitter:image:src" content="https://raw.githubusercontent.com/rreusser/maps/main/box-o-maps/src/assets/cover.jpg">
 
 
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
-  <link href="styles.css" rel="stylesheet">
+  <link href="vendor/mapbox-gl.css" rel="stylesheet">
   <link href="vendor/mapbox-gl-geocoder.css" rel="stylesheet">
+  <link href="src/styles.css" rel="stylesheet">
 
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+  <script src="vendor/mapbox-gl.js"></script>
   <script src="vendor/mapbox-gl-geocoder.min.js"></script>
+  <script src="vendor/react.production.min.js"></script>
+  <script src="vendor/react-dom.production.min.js"></script>
+  <script src="vendor/htm.js"></script>
 </head>
 <body>
+  <div id="root"></div>
 
-  <div id="map"></div>
-  <script src="index.js" type="module"></script>
+  <script type="module">
+    window.mapboxgl.accessToken = 'pk.eyJ1IjoicnJldXNzZXIiLCJhIjoiY2w5a3ZvcHU3NTJvZDNvcW1hcHAzeXB6cCJ9.CDFj_g1W8pBg6KA-ascYig';
+    window.html = htm.bind(React.createElement);
 
+    import App from './src/app.js';
+
+    ReactDOM.render(html`<${App}/>`, document.getElementById('root'));
+  </script>
 </body>
 </html>

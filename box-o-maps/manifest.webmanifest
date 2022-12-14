@@ -1,4 +1,5 @@
 {
+  "theme_color": "#61C9FF",
   "background_color": "#61C9FF",
   "description": "All maps, all day.",
   "display": "fullscreen",
@@ -9,7 +10,7 @@
       "type": "image/png"
     }
   ],
-  "name": "Maps",
-  "short_name": "Maps",
+  "name": "Box o' Maps",
+  "short_name": "Box o' Maps",
   "start_url": "index.html"
 }

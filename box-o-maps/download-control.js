@@ -17,7 +17,7 @@ export default class DownloadControl {
 
     const btn = document.createElement('button');
 
-    btn.textContent = '💾';
+    btn.textContent = '📷';
     btn.title = 'Download PNG';
 
     btn.addEventListener('click', function () {

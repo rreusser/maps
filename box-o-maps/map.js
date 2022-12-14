@@ -13,6 +13,7 @@ export default function createMap ({
     style,
     center,
     zoom,
+    hash,
     projection
   });
 }

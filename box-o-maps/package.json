@@ -11,5 +11,8 @@
   "license": "ISC",
   "devDependencies": {
     "st": "^3.0.0"
+  },
+  "dependencies": {
+    "@mapbox/mapbox-gl-geocoder": "^5.0.1"
   }
 }

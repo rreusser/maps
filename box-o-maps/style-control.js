@@ -1,6 +1,6 @@
 const styles = [{
   label: 'Streets',
-  icon: '🚗',
+  icon: '🛣',
   url: 'mapbox://styles/mapbox/streets-v12',
 }, {
   label: 'Satellite-Streets',

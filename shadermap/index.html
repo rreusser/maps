@@ -98,7 +98,7 @@ const float facets = 5.0;
 
 void main () {
   vec2 xy = (uv - 0.5) * resolution;
-  float theta = fract((atan(xy.y, xy.x) / twoPi) * facets) * twoPi / facets;
+  float theta = abs(fract((atan(xy.y, xy.x) / twoPi) * facets) - 0.5) * twoPi / facets;
   vec2 samplePos = (vec2(cos(theta), sin(theta)) * length(xy)) / resolution + 0.5;
   gl_FragColor = vec4(texture2D(map, samplePos).rgb, 1);
 }`;

@@ -73,6 +73,7 @@ var map = window.map = new mapboxgl.Map({
   style: `mapbox://styles/${guiParams.style}`,
   projection: guiParams.projection,
   hash: true,
+  maxPitch: 0
 });
 
 const canvas = document.getElementById('map-overlay');

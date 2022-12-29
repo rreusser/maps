@@ -62,8 +62,21 @@ mapboxgl.accessToken = 'pk.eyJ1IjoicnJldXNzZXIiLCJhIjoiY2w5a3ZvcHU3NTJvZDNvcW1hc
 
 const guiParams = new function () {
   this.projection = 'mercator';
-  this.editShader = toggleEdit;
   this.style = 'mapbox/satellite-v9';
+
+  this['Toggle shader editor'] = toggleEdit;
+  this['Download PNG'] = function downloadPng () {
+    map.once("render", function () {
+      var link = document.createElement("a");
+      link.target = '_blank';
+      link.download = "map.png";
+      link.href = regl._gl.canvas.toDataURL();
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+    map.triggerRepaint();
+  }
 };
 
 var map = window.map = new mapboxgl.Map({
@@ -80,6 +93,7 @@ const canvas = document.getElementById('map-overlay');
 
 const regl = createREGL({
   extensions: ['oes_standard_derivatives'],
+  attributes: { preserveDrawingBuffer: true, antialias: true, depthStencil: false, alpha: false },
   canvas,
 });
 
@@ -123,7 +137,8 @@ const draw = regl({
     resolution: (ctx) => [ctx.framebufferWidth, ctx.framebufferHeight],
     map: regl.prop("tex")
   },
-  count: 3
+  count: 3,
+  depth: {enable: false}
 });
 
 const editor = document.getElementById('shader-editor');
@@ -155,7 +170,8 @@ map.on('load', function () {
     'equalArea',
   ]);
   proj.onFinishChange(value => map.setProjection(value));
-  gui.add(guiParams, 'editShader');
+  gui.add(guiParams, 'Toggle shader editor');
+  gui.add(guiParams, 'Download PNG');
 
   const mapCanvas = map.getCanvas();
   const params = {

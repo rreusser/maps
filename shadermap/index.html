@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shadermap</title>
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link rel='stylesheet' href="https://unpkg.com/mapbox-gl@2.11.1/dist/mapbox-gl.css" />
+
+  <meta property="description" content="Mapbox + a customizable post-processing shader">
+
+  <meta property="og:type" content="article">
+  <meta property="og:image" content="https://raw.githubusercontent.com/rreusser/maps/main/shadermap/thumbnail.jpg">
+  <meta property="og:title" content="Shadermap">
+  <meta property="og:description" content="Mapbox + a customizable post-processing shader">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shadermap">
+  <meta name="twitter:description" content="Mapbox + a customizable post-processing shader">
+  <meta name="twitter:creator" content="rickyreusser">
+  <meta name="twitter:image:src" content="https://raw.githubusercontent.com/rreusser/maps/main/shadermap/thumbnail.jpg">
+
+  <style>
+    #map,
+    #map-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #map-overlay {
+      z-index: 1;
+      pointer-events: none;
+    }
+    .dg.ac {
+      z-index: 2 !important;
+    }
+    #shader-editor {
+      position: fixed;
+      z-index: 2;
+      width: 100%;
+      bottom: 0;
+      overflow-y: scroll;
+      height: 25vh;
+      left: 0;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+<div id='map'></div>
+<canvas id="map-overlay"></canvas>
+<textarea id="shader-editor"></textarea>
+
+<script src="https://unpkg.com/dat.gui@0.7.9/build/dat.gui.js"></script>
+<script src="https://unpkg.com/mapbox-gl@2.11.1/dist/mapbox-gl.js"></script>
+<script src="https://unpkg.com/regl@1.3.1"></script>
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoicnJldXNzZXIiLCJhIjoiY2w5a3ZvcHU3NTJvZDNvcW1hcHAzeXB6cCJ9.CDFj_g1W8pBg6KA-ascYig';
+
+const guiParams = new function () {
+  this.projection = 'mercator';
+  this.editShader = toggleEdit;
+  this.style = 'mapbox/satellite-v9';
+};
+
+var map = window.map = new mapboxgl.Map({
+  container: 'map',
+  zoom: 1,
+  center: [0, 10],
+  style: `mapbox://styles/${guiParams.style}`,
+  projection: guiParams.projection,
+});
+
+const canvas = document.getElementById('map-overlay');
+
+const regl = createREGL({
+  extensions: ['oes_standard_derivatives'],
+  canvas,
+});
+
+function onResize () {
+  canvas.width = map.getCanvas().width;
+  canvas.height = map.getCanvas().height;
+}
+window.addEventListener('resize', onResize);
+onResize();
+
+let frag = `precision lowp float;
+varying vec2 uv;
+uniform vec2 resolution;
+uniform sampler2D map;
+
+const float twoPi = 2.0 * ${Math.PI};
+const float facets = 5.0;
+
+void main () {
+  vec2 xy = (uv - 0.5) * resolution;
+  float theta = fract((atan(xy.y, xy.x) / twoPi) * facets) * twoPi / facets;
+  vec2 samplePos = (vec2(cos(theta), sin(theta)) * length(xy)) / resolution + 0.5;
+  gl_FragColor = vec4(texture2D(map, samplePos).rgb, 1);
+}`;
+
+const draw = regl({
+  vert: `
+    precision lowp float;
+    attribute vec2 xy;
+    varying vec2 uv;
+    void main () {
+      uv = 0.5 + 0.5 * xy;
+      gl_Position = vec4(xy, 0, 1);
+    }`,
+  frag: regl.prop('frag'),
+  attributes: {
+    xy: [-4, -4, 4, -4, 0, 4]
+  },
+  uniforms: {
+    resolution: (ctx) => [ctx.framebufferWidth, ctx.framebufferHeight],
+    map: regl.prop("tex")
+  },
+  count: 3
+});
+
+const editor = document.getElementById('shader-editor');
+editor.textContent = frag;
+function toggleEdit () {
+  editor.style.display = editor.style.display === 'block' ? 'none' : 'block';
+  editor.addEventListener('input', function (event) {
+    event.stopPropagation();
+    map.triggerRepaint();
+  });
+}
+
+map.on('load', function () {
+  const gui = new dat.GUI();
+
+  const style = gui.add(guiParams, 'style', [
+    'mapbox/streets-v12',
+    'mapbox/satellite-streets-v11',
+    'mapbox/light-v10',
+    'mapbox/dark-v10',
+    'mapbox/outdoors-v11',
+    'mapbox/satellite-v9',
+  ]);
+  style.onFinishChange(value => map.setStyle(`mapbox://styles/${value}`));
+  const proj = gui.add(guiParams, 'projection', [
+    'mercator',
+    'globe',
+    'naturalEarth',
+    'equalArea',
+  ]);
+  proj.onFinishChange(value => map.setProjection(value));
+  gui.add(guiParams, 'editShader');
+
+  const mapCanvas = map.getCanvas();
+  const tex = regl.texture({data: mapCanvas, flipY: true});
+
+  map.on('render', function () {
+    if (mapCanvas.width === tex.width && mapCanvas.height === tex.height) {
+      tex.subimage(mapCanvas);
+    } else {
+      tex({data: mapCanvas, flipY: true});
+    }
+    regl.poll();
+    draw({tex, frag: editor.value});
+  });
+
+  map.triggerRepaint();
+});
+
+</script>
+</body>
+</html>

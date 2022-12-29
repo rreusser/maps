@@ -94,13 +94,14 @@ uniform vec2 resolution;
 uniform sampler2D map;
 
 const float twoPi = 2.0 * ${Math.PI};
-const float facets = 5.0;
+const float facets = 3.0;
 
 void main () {
   vec2 xy = (uv - 0.5) * resolution;
-  float theta = abs(fract((atan(xy.y, xy.x) / twoPi) * facets) - 0.5) * twoPi / facets;
+  float theta = (abs(fract((atan(xy.y, xy.x) / twoPi) * facets) - 0.5) + 0.5) * twoPi / facets;
   vec2 samplePos = (vec2(cos(theta), sin(theta)) * length(xy)) / resolution + 0.5;
-  gl_FragColor = vec4(texture2D(map, samplePos).rgb, 1);
+  vec2 mirrored = 1.0 - 2.0 * abs(fract(samplePos * 0.5) - 0.5);
+  gl_FragColor = vec4(texture2D(map, mirrored).rgb, 1);
 }`;
 
 const draw = regl({
@@ -155,13 +156,24 @@ map.on('load', function () {
   gui.add(guiParams, 'editShader');
 
   const mapCanvas = map.getCanvas();
-  const tex = regl.texture({data: mapCanvas, flipY: true});
+  const params = {
+    flipY: true,
+    min: 'linear',
+    mag: 'linear',
+  };
+  const tex = regl.texture({
+    data: mapCanvas,
+    ...params
+  });
 
   map.on('render', function () {
     if (mapCanvas.width === tex.width && mapCanvas.height === tex.height) {
       tex.subimage(mapCanvas);
     } else {
-      tex({data: mapCanvas, flipY: true});
+      tex({
+        data: mapCanvas,
+        ...params
+      });
     }
     regl.poll();
     draw({tex, frag: editor.value});

@@ -5,6 +5,7 @@
   <meta charset='utf-8'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <link rel='stylesheet' href="https://unpkg.com/mapbox-gl@2.11.1/dist/mapbox-gl.css" />
+  <link rel="stylesheet" href="https://unpkg.com/mapbox-gl-geocoder@2.0.1/dist/mapbox-gl-geocoder.css">
 
   <meta property="description" content="Mapbox + a customizable post-processing shader">
 
@@ -27,6 +28,9 @@
       width: 100%;
       height: 100%;
     }
+    #map .mapboxgl-ctrl-top-right {
+      z-index: 0;
+    }
     .dg.ac {
       z-index: 2 !important;
     }
@@ -47,12 +51,18 @@
 <div id='map'></div>
 <textarea id="shader-editor"></textarea>
 
+<script src="https://unpkg.com/mapbox-gl-geocoder@2.0.1/dist/mapbox-gl-geocoder.min.js"></script>
 <script src="https://unpkg.com/dat.gui@0.7.9/build/dat.gui.js"></script>
 <script src="https://unpkg.com/mapbox-gl@2.11.1/dist/mapbox-gl.js"></script>
 <script src="https://unpkg.com/regl@2.1.0"></script>
 
 <script>
 mapboxgl.accessToken = 'pk.eyJ1IjoicnJldXNzZXIiLCJhIjoiY2w5a3ZvcHU3NTJvZDNvcW1hcHAzeXB6cCJ9.CDFj_g1W8pBg6KA-ascYig';
+
+const geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl
+});
 
 const guiParams = new function () {
   this.projection = 'mercator';
@@ -82,6 +92,8 @@ var map = window.map = new mapboxgl.Map({
   hash: true,
   maxPitch: 0
 });
+
+map.addControl(geocoder, 'top-left');
 
 class ShaderPostProcControl {
   constructor () {

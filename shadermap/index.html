@@ -20,17 +20,12 @@
   <meta name="twitter:image:src" content="https://raw.githubusercontent.com/rreusser/maps/main/shadermap/thumbnail.jpg">
 
   <style>
-    #map,
-    #map-overlay {
+    #map {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-    }
-    #map-overlay {
-      z-index: 1;
-      pointer-events: none;
     }
     .dg.ac {
       z-index: 2 !important;
@@ -50,7 +45,6 @@
 
 <body>
 <div id='map'></div>
-<canvas id="map-overlay"></canvas>
 <textarea id="shader-editor"></textarea>
 
 <script src="https://unpkg.com/dat.gui@0.7.9/build/dat.gui.js"></script>
@@ -89,60 +83,96 @@ var map = window.map = new mapboxgl.Map({
   maxPitch: 0
 });
 
-const canvas = document.getElementById('map-overlay');
+class ShaderPostProcControl {
+  constructor () {
+    this.onResize = this.onResize.bind(this);
 
-const regl = createREGL({
-  extensions: ['oes_standard_derivatives'],
-  attributes: { preserveDrawingBuffer: true, antialias: true, depthStencil: false, alpha: false },
-  canvas,
-});
-
-function onResize () {
-  canvas.width = map.getCanvas().width;
-  canvas.height = map.getCanvas().height;
-}
-window.addEventListener('resize', onResize);
-onResize();
-
-let frag = `precision lowp float;
-varying vec2 uv;
-uniform vec2 resolution;
-uniform sampler2D map;
-
-const float twoPi = 2.0 * ${Math.PI};
-const float facets = 5.0;
-
-void main () {
-  vec2 xy = (uv - 0.5) * resolution;
-  float theta = (abs(fract((atan(xy.y, xy.x) / twoPi) * facets) - 0.5) + 0.5) * twoPi / facets;
-  vec2 samplePos = (vec2(cos(theta), sin(theta)) * length(xy)) / resolution + 0.5;
-  vec2 mirrored = 1.0 - 2.0 * abs(fract(samplePos * 0.5) - 0.5);
-  gl_FragColor = vec4(texture2D(map, mirrored).rgb, 1);
-}`;
-
-const draw = regl({
-  vert: `
-    precision lowp float;
-    attribute vec2 xy;
+    this.frag = `precision lowp float;
     varying vec2 uv;
-    void main () {
-      uv = 0.5 + 0.5 * xy;
-      gl_Position = vec4(xy, 0, 1);
-    }`,
-  frag: regl.prop('frag'),
-  attributes: {
-    xy: [-4, -4, 4, -4, 0, 4]
-  },
-  uniforms: {
-    resolution: (ctx) => [ctx.framebufferWidth, ctx.framebufferHeight],
-    map: regl.prop("tex")
-  },
-  count: 3,
-  depth: {enable: false}
-});
+    uniform vec2 resolution;
+    uniform sampler2D map;
 
-const editor = document.getElementById('shader-editor');
-editor.textContent = frag;
+    const float twoPi = 2.0 * ${Math.PI};
+    const float facets = 5.0;
+
+    void main () {
+      vec2 xy = (uv - 0.5) * resolution;
+      float theta = (abs(fract((atan(xy.y, xy.x) / twoPi) * facets) - 0.5) + 0.5) * twoPi / facets;
+      vec2 samplePos = (vec2(cos(theta), sin(theta)) * length(xy)) / resolution + 0.5;
+      vec2 mirrored = 1.0 - 2.0 * abs(fract(samplePos * 0.5) - 0.5);
+      gl_FragColor = vec4(texture2D(map, mirrored).rgb, 1);
+    }`;
+  }
+
+  onAdd(map) {
+    const container = map.getContainer();
+    this.canvas = document.createElement('canvas');
+    this.canvas.style.position = 'absolute';
+    this.canvas.style.top = 0;
+    this.canvas.style.right = 0;
+    this.onResize();
+    window.addEventListener('resize', this.onResize);
+
+    this.regl = createREGL({
+      extensions: ['oes_standard_derivatives'],
+      attributes: { preserveDrawingBuffer: true, antialias: true, depthStencil: false, alpha: false },
+      canvas: this.canvas,
+    });
+
+    this.draw = this.regl({
+      vert: `
+        precision lowp float;
+        attribute vec2 xy;
+        varying vec2 uv;
+        void main () {
+          uv = 0.5 + 0.5 * xy;
+          gl_Position = vec4(xy, 0, 1);
+        }`,
+      frag: this.regl.prop('frag'),
+      attributes: {
+        xy: [-4, -4, 4, -4, 0, 4]
+      },
+      uniforms: {
+        resolution: (ctx) => [ctx.framebufferWidth, ctx.framebufferHeight],
+        map: this.regl.prop("tex")
+      },
+      count: 3,
+      depth: {enable: false}
+    });
+
+    const mapCanvas = map.getCanvas();
+    const texParams = { flipY: true, min: 'linear', mag: 'linear' };
+    const tex = this.regl.texture({ data: mapCanvas, ...texParams });
+
+    map.on('render', () => {
+      if (mapCanvas.width === tex.width && mapCanvas.height === tex.height) {
+        tex.subimage(mapCanvas);
+      } else {
+        tex({ data: mapCanvas, ...texParams });
+      }
+      this.regl.poll();
+      this.draw({tex, frag: editor.value});
+    });
+
+    map.triggerRepaint();
+
+    return this.canvas;
+  }
+
+  onRemove () {
+    window.removeEventListener('resize', this.onResize);
+    this.regl.destroy();
+    this.regl = null;
+  }
+
+  onResize () {
+    this.canvas.width = map.getCanvas().width;
+    this.canvas.height = map.getCanvas().height;
+    this.canvas.style.width = `${map.getContainer().offsetWidth}px`;
+    this.canvas.style.height = `${map.getContainer().offsetHeight}px`;
+  }
+}
+
 function toggleEdit () {
   editor.style.display = editor.style.display === 'block' ? 'none' : 'block';
   editor.addEventListener('input', function (event) {
@@ -150,6 +180,10 @@ function toggleEdit () {
     map.triggerRepaint();
   });
 }
+
+const postProc = new ShaderPostProcControl()
+const editor = document.getElementById('shader-editor');
+editor.textContent = postProc.frag;
 
 map.on('load', function () {
   const gui = new dat.GUI();
@@ -173,31 +207,7 @@ map.on('load', function () {
   gui.add(guiParams, 'Toggle shader editor');
   gui.add(guiParams, 'Download PNG');
 
-  const mapCanvas = map.getCanvas();
-  const params = {
-    flipY: true,
-    min: 'linear',
-    mag: 'linear',
-  };
-  const tex = regl.texture({
-    data: mapCanvas,
-    ...params
-  });
-
-  map.on('render', function () {
-    if (mapCanvas.width === tex.width && mapCanvas.height === tex.height) {
-      tex.subimage(mapCanvas);
-    } else {
-      tex({
-        data: mapCanvas,
-        ...params
-      });
-    }
-    regl.poll();
-    draw({tex, frag: editor.value});
-  });
-
-  map.triggerRepaint();
+  map.addControl(postProc);
 });
 
 </script>

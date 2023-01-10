@@ -124,7 +124,7 @@ class SnapshotControl {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(mapCanvas, 0, 0);
 
-    ctx.scale(2, 2);
+    ctx.scale(dpr, dpr);
 
     const logo = map.getContainer().querySelector(".mapboxgl-ctrl-logo");
     const attrib = map.getContainer().querySelector(".mapboxgl-ctrl-attrib");

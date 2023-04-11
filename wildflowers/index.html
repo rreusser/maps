@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapbox GL JS debug page</title>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel='stylesheet' href='https://unpkg.com/mapbox-gl/dist/mapbox-gl.css' />
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
+</head>
+
+<body>
+<div id='map'></div>
+
+<div style="position:fixed;top:0;left:0;background:rgb(255 255 255/70%);padding:10px;font-style:italic;font-family:sans-serif;font-size:1em">
+    Data source: <a href="https://www.parks.ca.gov/?page_id=30080">Flower Bloom Updates</a>
+</div>
+
+<script src='https://unpkg.com/mapbox-gl/dist/mapbox-gl.js'></script>
+<script>
+
+window.mapboxgl.accessToken = 'pk.eyJ1IjoicnJldXNzZXIiLCJhIjoiY2w5a3ZvcHU3NTJvZDNvcW1hcHAzeXB6cCJ9.CDFj_g1W8pBg6KA-ascYig';
+
+var map = window.map = new mapboxgl.Map({
+    container: 'map',
+    zoom: 6.0,
+    center: [-119.4, 35.5],
+    style: 'mapbox://styles/mapbox/light-v11',
+    projection: {
+        name: 'lambertConformalConic',
+        center: [-119, 35.5],
+        parallels: [30, 40]
+    }
+});
+
+map.on('load', function () {
+
+    Promise.all([
+        fetch('./wildflowers.geojson')
+            .then(response => {
+                return response.json()
+            }),
+        new Promise((resolve, reject) => {
+            const img = new Image(30, 30);
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = './garden.svg';
+            document.body.appendChild(img);
+        }).then(img => {
+            map.addImage('garden.svg', img, {sdf: true, pixelRatio: 2});
+        }, console.error)
+    ]).then(([data]) => {
+        map.addSource('wildflowers', {
+            type: 'geojson',
+            tolerance: 0,
+            cluster: false,
+            data
+        });
+
+        map.addLayer({
+            id: 'wildflowers',
+            source: 'wildflowers',
+            type: 'symbol',
+            layout: {
+                'text-variable-anchor': ['top', 'bottom'],
+                'text-justify': 'center',
+                'text-radial-offset': 1.2,
+                'text-field': ['get', 'name'],
+                'icon-image': 'garden.svg',
+                'icon-allow-overlap': true,
+                'icon-ignore-placement': true,
+                'icon-size': 1.75,
+            },
+            paint: {
+                'text-halo-width': 1,
+                'text-halo-color': 'white',
+                'icon-color': 'violet',
+            }
+        });
+    });
+});
+
+</script>
+</body>
+</html>

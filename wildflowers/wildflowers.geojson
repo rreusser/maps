@@ -1,0 +1,93 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Mount Tamalpais State Park",
+        "url": "https://www.parks.ca.gov/?page_id=471"
+      },
+      "geometry": { "coordinates": [ -122.6108, 37.889 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "China Camp State Park",
+        "url": "https://www.parks.ca.gov/?page_id=466"
+      },
+      "geometry": { "coordinates": [ -122.4911, 38.0013 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Trione-Annadel State Park",
+        "url": "https://www.parks.ca.gov/?page_id=480"
+      },
+      "geometry": { "coordinates": [ -122.6324, 38.4329 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sugarloaf Ridge State Park",
+        "url": "Sugarloaf Ridge State Park"
+      },
+      "geometry": { "coordinates": [ -122.5163, 38.4372 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Anza-Borrego Desert State Park",
+        "url": "https://www.parks.ca.gov/?page_id=638"
+      },
+      "geometry": { "coordinates": [ -116.3013, 33.1005 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Antelope Valley California Poppy Reserve",
+        "url": "https://www.parks.ca.gov/?page_id=627"
+      },
+      "geometry": { "coordinates": [ -118.3969, 34.7249 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Chino Hills State Park",
+        "url": "https://www.parks.ca.gov/?page_id=648"
+      },
+      "geometry": { "coordinates": [ -117.7245, 33.918 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colonel Allensworth State Historic Park",
+        "url": "https://www.parks.ca.gov/?page_id=583"
+      },
+      "geometry": { "coordinates": [ -119.388889, 35.863611 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Eastern Kern County Onyx Ranch State Vehicular Recreation Area",
+        "url": "https://ohv.parks.ca.gov/?page_id=28617"
+      },
+      "geometry": { "coordinates": [ -118.02125, 35.33302 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Red Rock Canyon State Park",
+        "url": "https://www.parks.ca.gov/?page_id=631"
+      },
+      "geometry": { "coordinates": [ -117.9623, 35.3844 ], "type": "Point" }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tule Elk State Natural Reserve",
+        "url": "https://www.parks.ca.gov/?page_id=584"
+      },
+      "geometry": { "coordinates": [ -119.35873, 35.300696 ], "type": "Point" }
+    }
+  ]
+}

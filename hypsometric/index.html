@@ -80,17 +80,21 @@ const MIX = [ 255 * 256 * 256 * 0.1, 255 * 256 * 0.1, 255 * 0.1, -10000 ];
 const _IMAGE = atob('cGsuZXlKMUlqb2ljbkpsZFhOelpYSWlMQ0poSWpvaVkydzVhM1p2Y0hVM05USnZaRE52Y1cxaGNIQXplWEI2Y0NKOS5DREZqX2cxVzhwQmc2S0EtYXNjWWln');
 const RANGE = [0, 8848];
 const GRADIENT = [
-    [0.0, 'rgb(57, 143, 83)'],
-    [0.0316,'rgb(116, 166, 129)'],
-    [0.055, 'rgb(178, 205, 174)'],
-    [0.076, 'rgb(188, 195, 169)'],
-    [0.108, 'rgb(221, 207, 153)'],
-    [0.153, 'rgb(211, 174, 114)'],
-    [0.205, 'rgb(207, 155, 103)'],
-    [0.277, 'rgb(179, 120, 85)'],
-    [0.375, 'rgb(227, 210, 197)'],
-    [0.660, 'rgb(255, 255, 255)'],
+    [0.012, "rgb(48, 72, 55)"],
+    [0.032, "rgb(43, 81, 53)"],
+    [0.055, "rgb(76, 106, 72)"],
+    [0.096, "rgb(158, 163, 106)"],
+    [0.138, "rgb(211, 174, 114)"],
+    [0.188, "rgb(207, 155, 103)"],
+    [0.243, "rgb(188, 137, 106)"],
+    [0.340, "rgb(227, 210, 197)"],
+    [0.660, "rgb(255, 255, 255)"]
 ];
+const HILL_RES = {
+  '128': 128,
+  '256': 256,
+  '512': 512,
+};
 
 const gp = new Grapick({
     el: '#gp',
@@ -119,8 +123,11 @@ var map = new mapboxgl.Map({
 });
 
 var guiParams = {
-    opacity: 0.8,
+    'tint-opacity': 0.67,
+    'water-opacity': 0.5,
+    'water-color': '#111828',
     'hillshading': 0.5,
+    'hillshade-res': 512
 };
 
 map.on('load', function () {
@@ -128,12 +135,21 @@ map.on('load', function () {
 
     map.addControl(new SnapshotControl());
 
+    function setRes() {
+        map.getSource('mapbox-dem').tileSize = HILL_RES[guiParams['hillshade-res']];
+        map.style._sourceCaches['other:mapbox-dem'].update(map.transform);
+    }
+
     function setPaint() {
         map.setPaintProperty('raster-layer', 'raster-color-mix', MIX);
-        map.setPaintProperty('raster-layer', 'raster-opacity', guiParams['opacity']);
+        map.setPaintProperty('raster-layer', 'raster-opacity', guiParams['tint-opacity']);
+        map.setPaintProperty('water', 'fill-opacity', guiParams['water-opacity']);
+        map.setPaintProperty('water', 'fill-color', guiParams['water-color']);
     }
 
     function setTileset() {
+        if (map.getSource('streets')) map.removeSource('streets');
+        if (map.getLayer('water')) map.removeSource('water');
         if (map.getLayer('raster-layer')) map.removeLayer('raster-layer');
         if (map.getSource('raster-source')) map.removeSource('raster-source');
 
@@ -141,7 +157,7 @@ map.on('load', function () {
             map.addSource('mapbox-dem', {
                 "type": "raster-dem",
                 "url": "mapbox://mapbox.mapbox-terrain-dem-v1",
-                "tileSize": 512,
+                "tileSize": HILL_RES[guiParams['hillshade-res']],
                 "maxzoom": 14
             });
         }
@@ -169,6 +185,7 @@ map.on('load', function () {
             source: 'raster-source',
             type: 'raster',
             paint: {
+                'raster-opacity': guiParams['tint-opacity'],
                 'raster-color-mix': MIX,
                 'raster-color-range': [0, 8848],
                 'raster-color': [
@@ -180,14 +197,27 @@ map.on('load', function () {
             }
         }, 'hillshade');
 
+        map.addSource('streets', {
+            type: 'vector',
+            url: 'mapbox://mapbox.mapbox-streets-v8'
+        });
+        map.addLayer({
+            'id': 'water',
+            'source': 'streets',
+            'source-layer': 'water',
+            'type': 'fill',
+            'paint': {
+                'fill-color': 'rgb(10, 20, 50)',
+                'fill-opacity': guiParams['water-opacity'],
+            }
+        });
+
         setGradient();
         setHillshade();
     }
 
-    var opacity = gui.add(guiParams, 'opacity', 0, 1, 0.01).listen();
-    opacity.onChange((value) => {
-        setPaint();
-    });
+    var opacity = gui.add(guiParams, 'tint-opacity', 0, 1, 0.01).listen();
+    opacity.onChange((value) => { setPaint(); });
 
     setTileset();
 
@@ -209,9 +239,16 @@ map.on('load', function () {
     gp.on('change', onGradientChange);
 
     var hillshade = gui.add(guiParams, 'hillshading', 0, 1, 0.01).listen();
-    hillshade.onChange((value) => {
-        setHillshade();
-    });
+    hillshade.onChange((value) => { setHillshade(); });
+
+    var waterOpacity = gui.add(guiParams, 'water-opacity', 0, 1, 0.01).listen();
+    waterOpacity.onChange((value) => { setPaint(); });
+
+    var hillRes = gui.add(guiParams, 'hillshade-res', Object.keys(HILL_RES)).listen();
+    hillRes.onChange((value) => { setRes(); });
+
+    var waterColor = gui.addColor(guiParams, 'water-color').listen();
+    waterColor.onChange((value) => { setPaint(); });
 
     function setHillshade () {
       if (!guiParams.hillshading) {

@@ -23,13 +23,16 @@
 <script src='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js'></script>
 <script>
 
+// Force this for consistent output
+window.devicePixelRatio = 2;
+
 const _CONFIG = atob('cGsuZXlKMUlqb2ljbkpsZFhOelpYSWlMQ0poSWpvaVkydzVhM1p2Y0hVM05USnZaRE52Y1cxaGNIQXplWEI2Y0NKOS5DREZqX2cxVzhwQmc2S0EtYXNjWWln');
 
 const map = new mapboxgl.Map({
 	container: 'map', // container ID
 	style: 'mapbox://styles/mapbox/satellite-v9', // style URL
-	center: [-74.5, 40], // starting position [lng, lat]
-	zoom: 9, // starting zoom
+	center: [0, 0], // starting position [lng, lat]
+	zoom: 1.5, // starting zoom
   hash: true,
   bearingSnap: false,
   [atob('YWNjZXNzVG9rZW4=')]: _CONFIG,
@@ -39,17 +42,17 @@ map.on('load', function () {
   map.addControl(new MapboxGeocoder({
     mapboxgl,
     [atob('YWNjZXNzVG9rZW4=')]: _CONFIG,
-  }))
+  }), 'top-left')
   const nav = new mapboxgl.NavigationControl();
   map.addControl(nav, 'top-right');
    const scale = new mapboxgl.ScaleControl({
       maxWidth: 80,
       unit: 'imperial'
-  });
+  }, 'top-left');
   map.addControl(scale);
   scale.setUnit('metric');
 
-  map.addControl(new SnapshotControl());
+  map.addControl(new SnapshotControl(), 'top-left');
 });
 
 class SnapshotControl {

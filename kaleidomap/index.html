@@ -326,7 +326,7 @@ const BBOXES = [
 const BBOX = BBOXES[Math.floor(Math.random() * BBOXES.length)];
 
 function easeToRandom ({duration} = {duration: TRANSITION_DURATION}) {
-  map.easeTo({...randomPoint(BBOX), duration});
+  map.easeTo({...randomPoint(BBOX), duration, bearing: Math.random() * 360});
 }
 
 let start, stop;

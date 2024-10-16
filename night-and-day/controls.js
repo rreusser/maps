@@ -62,19 +62,6 @@ export class GuiControl {
     const guiParams = this.guiParams;
     const terminatorRenderer = this.terminatorRenderer;
 
-    guiParams['Download PNG'] = function downloadPng () {
-      map.once("render", function () {
-        var link = document.createElement("a");
-        link.target = '_blank';
-        link.download = "map.png";
-        link.href = map._canvas.toDataURL();
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-      map.triggerRepaint();
-    }
-
     const gui = new dat.GUI({ autoPlace: false });
     gui.close();
 

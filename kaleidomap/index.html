@@ -347,6 +347,8 @@ map.on('load', function () {
     'mapbox/dark-v10',
     'mapbox/outdoors-v11',
     'mapbox/satellite-v9',
+    'mapbox/standard',
+    'mapbox/standard-satellite',
   ]);
   style.onFinishChange(value => map.setStyle(`mapbox://styles/${value}`));
   const proj = gui.add(guiParams, 'projection', [

@@ -65,12 +65,6 @@ const geocoder = new MapboxGeocoder({
 });
 
 class SnapshotControl {
-  constructor ({mapCanvas=null} = {}) {
-    if (mapCanvas) {
-      this.mapCanvas = mapCanvas;
-    }
-  }
-
   onAdd(map) {
     this._map = map;
     this._container = document.createElement("div");
@@ -101,8 +95,7 @@ class SnapshotControl {
       const link = document.createElement("a");
       link.target = "_blank";
       link.download = "map.png";
-      console.log('map canvas = ', this.mapCanvas);
-      this.prepareImage(this.mapCanvas || this._map.getCanvas())
+      this.prepareImage(this._map.getCanvas())
         .then((href) => {
           link.href = href;
           document.body.appendChild(link);
@@ -135,12 +128,14 @@ class SnapshotControl {
     let renderLogo = Promise.resolve();
     if (logo) {
       const img = new Image();
+      const imgHeight = 23;
+      const imgWidth = 88;
       renderLogo = new Promise(function (resolve, reject) {
         img.onload = () => resolve(img);
         img.onerror = reject;
       }).then((img) => {
         if (!img) return;
-        ctx.drawImage(img, 6, mapHeight - img.height - 6);
+        ctx.drawImage(img, 6, mapHeight - imgHeight - 6, imgWidth, imgHeight);
       });
       img.src = window
         .getComputedStyle(logo)

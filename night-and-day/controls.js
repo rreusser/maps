@@ -129,8 +129,6 @@ export class GuiControl {
       terminatorRenderer.date = date;
     }
 
-    gui.add(guiParams, 'Download PNG');
-
     return gui.domElement;
   }
 }

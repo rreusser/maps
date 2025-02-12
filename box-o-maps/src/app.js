@@ -12,7 +12,7 @@ export default function App() {
   useEffect(() => {
     const newMap = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: 'mapbox://styles/mapbox/standard',
       center: [0, 0],
       zoom: 0.4,
       hash: true,

@@ -1,15 +1,19 @@
 const styles = [{
-  label: 'Streets',
+  label: 'Standard',
   icon: '🛣',
-  url: 'mapbox://styles/mapbox/streets-v12',
-}, {
-  label: 'Satellite-Streets',
-  icon: '🫱🏼‍🫲🏿',
-  url: 'mapbox://styles/mapbox/satellite-streets-v9',
+  url: 'mapbox://styles/mapbox/standard',
 }, {
   label: 'Satellite',
   icon: '🛰',
-  url: 'mapbox://styles/mapbox/satellite-v9',
+  url: 'mapbox://styles/mapbox/satellite-standard',
+}, {
+  label: 'Outdoors',
+  icon: '🏔️',
+  url: 'mapbox://styles/mapbox/outdoors-v12',
+}, {
+  label: 'Streets',
+  icon: '🚛',
+  url: 'mapbox://styles/mapbox/streets-v12',
 }, {
   label: 'Dark',
   icon: '🌚',

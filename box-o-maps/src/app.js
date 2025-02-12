@@ -16,7 +16,6 @@ export default function App() {
       center: [0, 0],
       zoom: 0.4,
       hash: true,
-      projection: 'mercator',
     });
 
     const styleControl = new StyleControl();

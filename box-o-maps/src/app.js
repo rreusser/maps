@@ -1,6 +1,7 @@
 const { useRef, useState, useEffect } = React;
 import StyleControl from './style-control.js';
 import DownloadControl from './download-control.js';
+import TerrainControl from './terrain-control.js';
 
 export default function App() {
   const mapContainer = useRef(null);
@@ -24,14 +25,21 @@ export default function App() {
       accessToken: window.mapboxgl.accessToken,
       mapboxgl: window.mapboxgl
     });
+    const fullscreenControl = new mapboxgl.FullscreenControl({container: document.querySelector('body')});
+    const navigationControl = new mapboxgl.NavigationControl();
+    const terrainControl = new TerrainControl();
+
 
     setStyleControl(styleControl);
     setDownloadControl(downloadControl);
     setGeocoderControl(geocoderControl);
 
     newMap.addControl(downloadControl, 'bottom-left');
+    newMap.addControl(terrainControl, 'bottom-left');
     newMap.addControl(styleControl, 'bottom-left');
     newMap.addControl(geocoderControl, 'top-right');
+    newMap.addControl(fullscreenControl, 'top-left');
+    newMap.addControl(navigationControl, 'top-left');
 
     setMap(newMap);
   }, []);

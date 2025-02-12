@@ -29,6 +29,19 @@ body {
   border: none;
 }
 
+.mapboxgl-ctrl-group button.active {
+  background-color: #3277e5;
+  text-shadow: 0 0 5px white;
+}
+
+.mapboxgl-ctrl-group:hover button.active {
+  background-color: #4287f5;
+}
+
+.mapboxgl-ctrl-style:not(:hover) button {
+  background-color: white;
+}
+
 .mapboxgl-ctrl-style:hover button,
 .mapboxgl-ctrl-style button.active {
   display: block;
@@ -43,3 +56,4 @@ body {
 .mapboxgl-ctrl-style:hover button.active:not(:disabled):hover {
   background-color: #3277e5;
 }
+

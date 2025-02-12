@@ -5,7 +5,7 @@ const styles = [{
 }, {
   label: 'Satellite',
   icon: '🛰',
-  url: 'mapbox://styles/mapbox/satellite-standard',
+  url: 'mapbox://styles/mapbox/standard-satellite',
 }, {
   label: 'Outdoors',
   icon: '🏔️',

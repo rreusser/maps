@@ -3,7 +3,7 @@
     <title>Sightseeing</title>
     <meta charset='utf-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css' rel='stylesheet' />
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.11.1/mapbox-gl.css' rel='stylesheet' />
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
     <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css' type='text/css' />
     <style>
@@ -11,8 +11,8 @@
         html, body { height: 100%; }
 
         #map {
-          width: 1800px;
-          height: 1169px;
+          width: 100%; /*1800px;*/
+          height: 100%; /*1169px;*/
         }
     </style>
 </head>
@@ -20,14 +20,12 @@
 <body>
 <div id='map'></div>
 
-<script src='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js'></script>
+<script src='https://api.mapbox.com/mapbox-gl-js/v3.11.1/mapbox-gl.js'></script>
 <script>
 
 // Force this for consistent output
 window.devicePixelRatio = 2;
-
-const _CONFIG = atob('cGsuZXlKMUlqb2ljbkpsZFhOelpYSWlMQ0poSWpvaVkydzVhM1p2Y0hVM05USnZaRE52Y1cxaGNIQXplWEI2Y0NKOS5DREZqX2cxVzhwQmc2S0EtYXNjWWln');
-
+const _CONFIG = atob('cGsuZXlKMUlqb2ljbk55WlhWemMyVnlJaXdpWVNJNkltTnBlbVoxZWpad2FEQXdZbkF5Y1hCc01HaHdkbXB4Y2pBaWZRLmdXeWM3d0NadUdaMDU5NkNfWnVQbXc=');
 const map = new mapboxgl.Map({
 	container: 'map', // container ID
 	style: 'mapbox://styles/mapbox/satellite-v9', // style URL

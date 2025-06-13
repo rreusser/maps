@@ -28,7 +28,7 @@ export default class StyleControl {
     this._curStyleIcon.textContent = style.icon;
     this._styleMenu = createBtn({
       icon: this._curStyleIcon,
-      title: style.label,
+      title: 'Map style',
       onClick: () => this._styleMenu.classList.toggle("active"),
     });
     this._styleMenu.classList.add("style-menu");

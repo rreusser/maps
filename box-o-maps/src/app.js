@@ -28,7 +28,7 @@ export default function App() {
     const fullscreenControl = new mapboxgl.FullscreenControl({container: document.querySelector('body')});
     const navigationControl = new mapboxgl.NavigationControl();
     const terrainControl = new TerrainControl();
-
+    const scaleControl = new mapboxgl.ScaleControl();
 
     setStyleControl(styleControl);
     setDownloadControl(downloadControl);
@@ -40,6 +40,7 @@ export default function App() {
     newMap.addControl(geocoderControl, 'top-right');
     newMap.addControl(fullscreenControl, 'top-left');
     newMap.addControl(navigationControl, 'top-left');
+    newMap.addControl(scaleControl, 'bottom-right');
 
     setMap(newMap);
   }, []);

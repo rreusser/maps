@@ -11,12 +11,6 @@ const styles = [
     url: "mapbox://styles/mapbox/standard",
   },
   {
-    label: "Streets",
-    slug: "streets-v12",
-    icon: "🛣️",
-    url: "mapbox://styles/mapbox/streets-v12",
-  },
-  {
     label: "Standard Satellite",
     slug: "standard-satellite",
     icon: "🫱🏼‍🫲🏾",
@@ -27,6 +21,12 @@ const styles = [
     slug: "satellite-v9",
     icon: "🛰️",
     url: "mapbox://styles/mapbox/satellite-v9",
+  },
+  {
+    label: "Streets",
+    slug: "streets-v12",
+    icon: "🛣️",
+    url: "mapbox://styles/mapbox/streets-v12",
   },
   {
     label: "Outdoors",

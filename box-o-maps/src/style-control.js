@@ -12,9 +12,9 @@ function createBtn({ icon, onClick, title }) {
 }
 
 export default class StyleControl {
-  constructor(styleList, { onSetStyle }) {
+  constructor(styleList, { onSetStyle, initialStyle } = {}) {
     this.styleList = styleList;
-    this.currentStyle = this.styleList[0];
+    this.currentStyle = initialStyle || this.styleList[0];
     this.onSetStyle = onSetStyle;
   }
 
@@ -24,10 +24,10 @@ export default class StyleControl {
     this._controlContainer.classList = `mapboxgl-ctrl mapboxgl-ctrl-group mapboxgl-ctrl-style`;
 
     const style = this.styleList[0];
-    const curStyleIcon = document.createElement("span");
-    curStyleIcon.textContent = style.icon;
+    this._curStyleIcon = document.createElement("span");
+    this._curStyleIcon.textContent = style.icon;
     this._styleMenu = createBtn({
-      icon: curStyleIcon,
+      icon: this._curStyleIcon,
       title: style.label,
       onClick: () => this._styleMenu.classList.toggle("active"),
     });
@@ -53,7 +53,6 @@ export default class StyleControl {
           this.syncTerrain();
           this._styleMenu.classList.remove("active");
           this.syncStyleButtons();
-          curStyleIcon.textContent = icon;
         },
       });
       this._styleButtons.push(btn);
@@ -75,11 +74,13 @@ export default class StyleControl {
     this._map.on("click", () => {
       this._styleMenu.classList.remove("active");
     });
+    this.syncStyleButtons();
 
     return this._controlContainer;
   }
 
   syncStyleButtons() {
+    this._curStyleIcon.textContent = this.currentStyle.icon;
     this._styleButtons.forEach((btn) => {
       const btnSlug = btn.getAttribute("data-style-slug");
       if (btnSlug === this.currentStyle.slug) {

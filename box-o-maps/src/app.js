@@ -88,6 +88,7 @@ export default function App() {
     }));
 
     const styleControl = new StyleControl(styles, {
+      initialStyle: style,
       onSetStyle: (style) => {
         newMap.setStyle(style.url);
         pushState({ style });

@@ -12,48 +12,74 @@ body {
 
 .mapboxgl-ctrl-style button,
 .mapboxgl-ctrl-download button {
-  font-size: 2em;
+  font-size: 1.5rem;
   width: 40px;
   height: 40px;
 }
 
-.mapboxgl-ctrl-style button {
+.mapboxgl-ctrl-style button + button {
+  border-top-color: rgb(0 0 0/20%);
+}
+
+.style-menu {
+  position: relative;
+}
+.style-menu-container {
   display: none;
+  position: absolute;
+  margin: 0;
+  top: -11px;
+  left: 40px;
+  padding: 10px;
 }
 
-.mapboxgl-ctrl-style:not(:hover) button {
-  border-radius: 4px;
+.style-menu .mapboxgl-ctrl-group {
+  padding: 0;
+  flex-direction: row;
+  display: flex;
+  margin: 0;
 }
 
-.mapboxgl-ctrl-style:not(:hover) button+button {
-  border: none;
+.style-menu .mapboxgl-ctrl-group button:last-child {
+  border-radius: 0 4px 4px 0px;
 }
 
-.mapboxgl-ctrl-group button.active {
+.style-menu.active .style-menu-container,
+.style-menu:hover .style-menu-container {
+  display: block;
+}
+
+.mapboxgl-ctrl-style > button {
+  overflow: visible;
+}
+
+.mapboxgl-ctrl-style > button:not(:disabled):hover,
+.mapboxgl-ctrl-style > button.active {
   background-color: #3277e5;
   text-shadow: 0 0 5px white;
 }
 
-.mapboxgl-ctrl-group:hover button.active {
+.mapboxgl-ctrl-style > button.active:hover {
   background-color: #4287f5;
 }
 
-.mapboxgl-ctrl-style:not(:hover) button {
-  background-color: white;
+.style-menu-container button:first-child {
+  border-radius: 4px 0 0 4px;
 }
 
-.mapboxgl-ctrl-style:hover button,
-.mapboxgl-ctrl-style button.active {
-  display: block;
+.style-menu-container .style-btn {
+  text-shadow: 0 0 5px white;
+  border: none;
 }
 
-.mapboxgl-ctrl-style:hover button.active {
-  background-color: #4287f5;
-  text-shadow: 0 0 10px white, 0 0 3px white, 0 0 3px white;
-  color: white;
+.style-menu-container .style-btn + .style-btn {
+  border: none;
 }
 
-.mapboxgl-ctrl-style:hover button.active:not(:disabled):hover {
+.style-btn.active {
   background-color: #3277e5;
 }
 
+.style-btn.active:not(:disabled):hover {
+  background-color: #4287f5;
+}
